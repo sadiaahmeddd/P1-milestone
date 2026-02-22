@@ -1,0 +1,26 @@
+IGME 430 – Project 1 Milestone
+Sadia Ahmed
+Project: Pokédex API
+
+1. What dataset are you using?
+
+I’m using a Pokédex JSON dataset that includes information about different Pokémon, such as their id, num, name, type, and weaknesses. The dataset includes nested arrays (like the type and weaknesses fields), which meets the project requirement for nested data. The file is loaded once when the server starts and then stored in memory for the API to use.
+
+2. What work has been completed for this milestone?
+
+For this milestone, I focused on building the core API functionality. The server: Loads the JSON dataset at startup.
+Has four GET endpoints:
+/api/pokemon
+/api/pokemonById
+/api/pokemonByNum
+/api/types
+
+3. What work is left, and how do you plan to complete it?
+
+I still need to build the client-facing webpage and the separate API documentation page. I also need to add ESLint, set up GitHub Actions. My plan is to build the client interface next, then complete documentation and deployment before the final submission.
+
+4. Do you have a plan for going above and beyond?
+For above and beyond, I’m planning to improve the visual design of the client interface and possibly add more advanced filtering or search options to make the API easier to use.
+
+5. Did you use any borrowed code?
+I did look at copilot for some areas where I did get stuck and wasn't functioning but took ideas and guidelines but didn't copy paste 

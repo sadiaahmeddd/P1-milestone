@@ -1,31 +1,25 @@
 const querystring = require('querystring');
 
-let pokemonList = []; // always an array of pokemon objects (normalized)
+let pokemonList = []; // ALWAYS an array (your pokedex.json is an array)
 
-// Normalize the dataset so the rest of the API is consistent
+// Normalize dataset at startup
 const init = (data) => {
-  // Case 1: file is { pokemon: [...] }
-  if (data && Array.isArray(data.pokemon)) {
-    pokemonList = data.pokemon;
-    return;
-  }
-
-  // Case 2: file is just an array: [ ... ]
+  // Your file is: [ ...pokemon objects... ]
   if (Array.isArray(data)) {
     pokemonList = data;
     return;
   }
 
-  // Case 3: file uses a different key (common variants)
-  if (data && Array.isArray(data.Pokemon)) {
-    pokemonList = data.Pokemon;
+  // Fallback if you ever switch to { pokemon: [...] }
+  if (data && Array.isArray(data.pokemon)) {
+    pokemonList = data.pokemon;
     return;
   }
 
-  // If none matched, keep it empty (your endpoints will return errors)
   pokemonList = [];
 };
 
+// Always set Content-Type + Content-Length (required)
 const sendJSON = (response, statusCode, obj, headOnly) => {
   const payload = JSON.stringify(obj);
 
@@ -52,6 +46,7 @@ const sendNoContent = (response, statusCode) => {
 const sendError = (response, statusCode, message, headOnly) =>
   sendJSON(response, statusCode, { error: message }, headOnly);
 
+// Parse POST body as JSON OR x-www-form-urlencoded (required)
 const parseBody = (request, callback) => {
   let body = '';
 
@@ -85,6 +80,7 @@ const parseBody = (request, callback) => {
 
 // ---------- GET/HEAD endpoints ----------
 
+// GET /api/pokemon?name=&type=&weakness=&limit=
 const getPokemon = (request, response, headOnly, query) => {
   if (!Array.isArray(pokemonList) || pokemonList.length === 0) {
     return sendError(response, 500, 'Dataset not loaded correctly', headOnly);
@@ -92,11 +88,13 @@ const getPokemon = (request, response, headOnly, query) => {
 
   let results = [...pokemonList];
 
+  // name filter (partial, case-insensitive)
   if (query.name) {
     const needle = String(query.name).toLowerCase();
     results = results.filter((p) => String(p.name).toLowerCase().includes(needle));
   }
 
+  // type filter (exact match inside p.type array)
   if (query.type) {
     const typeNeedle = String(query.type).toLowerCase();
     results = results.filter(
@@ -104,6 +102,7 @@ const getPokemon = (request, response, headOnly, query) => {
     );
   }
 
+  // weakness filter (exact match inside p.weaknesses array)
   if (query.weakness) {
     const weakNeedle = String(query.weakness).toLowerCase();
     results = results.filter(
@@ -113,6 +112,7 @@ const getPokemon = (request, response, headOnly, query) => {
     );
   }
 
+  // limit
   if (query.limit) {
     const limitNum = Number(query.limit);
     if (Number.isNaN(limitNum) || limitNum < 1) {
@@ -124,6 +124,7 @@ const getPokemon = (request, response, headOnly, query) => {
   return sendJSON(response, 200, { count: results.length, pokemon: results }, headOnly);
 };
 
+// GET /api/pokemonById?id=1
 const getPokemonById = (request, response, headOnly, query) => {
   if (!query.id) {
     return sendError(response, 400, 'Missing required query param: id', headOnly);
@@ -142,6 +143,7 @@ const getPokemonById = (request, response, headOnly, query) => {
   return sendJSON(response, 200, match, headOnly);
 };
 
+// GET /api/pokemonByNum?num=001
 const getPokemonByNum = (request, response, headOnly, query) => {
   if (!query.num) {
     return sendError(response, 400, 'Missing required query param: num', headOnly);
@@ -156,6 +158,7 @@ const getPokemonByNum = (request, response, headOnly, query) => {
   return sendJSON(response, 200, match, headOnly);
 };
 
+// GET /api/types
 const getTypes = (request, response, headOnly) => {
   const typeSet = new Set();
 
@@ -170,6 +173,8 @@ const getTypes = (request, response, headOnly) => {
 
 // ---------- POST endpoints ----------
 
+// POST /api/addPokemon
+// body: id, num, name, type (comma string or array)
 const addPokemon = (request, response) => {
   return parseBody(request, (err, body) => {
     if (err) {
@@ -188,6 +193,7 @@ const addPokemon = (request, response) => {
       return sendError(response, 400, 'id must be a number', false);
     }
 
+    // type can be ["Grass","Poison"] OR "Grass,Poison"
     if (Array.isArray(type)) {
       type = type.map((t) => String(t).trim()).filter(Boolean);
     } else {
@@ -215,6 +221,8 @@ const addPokemon = (request, response) => {
   });
 };
 
+// POST /api/editPokemon
+// body: id (required), name/type/weaknesses (optional)
 const editPokemon = (request, response) => {
   return parseBody(request, (err, body) => {
     if (err) {
@@ -252,6 +260,7 @@ const editPokemon = (request, response) => {
       match.weaknesses = weakArr.map((w) => String(w).trim()).filter(Boolean);
     }
 
+    // Use 204 to satisfy required status code list
     return sendNoContent(response, 204);
   });
 };
