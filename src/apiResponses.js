@@ -1,6 +1,6 @@
 const querystring = require('querystring');
 
-let pokemonList = []; // ALWAYS an array (your pokedex.json is an array)
+let pokemonList = []; // 
 
 // Normalize dataset at startup
 const init = (data) => {
